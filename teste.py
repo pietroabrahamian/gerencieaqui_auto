@@ -19,6 +19,9 @@ from PyQt5.QtCore import Qt
 
 
 def gerencieAqui():
+    if input_nome == "":
+        label_erro.setText("Preencha todos os campos!!")
+
     # Fazendo o download do WebDriver mais recente e capturando o caminho do arquivo
     driver_path = ChromeDriverManager().install()
 
@@ -63,6 +66,13 @@ def gerencieAqui():
     vendedor_responsavel.send_keys("25431")
     li_vendedor = wait.until(EC.visibility_of_element_located((By.XPATH, "//ul[@class='ui-autocomplete-items ui-autocomplete-list ui-widget-content ui-widget ui-corner-all ui-helper-reset']/li[1]")))
     li_vendedor.click()
+
+    # nome do promotor
+    nome_promotor_text = input_nome.text().strip()
+    nome_promotor = driver.find_element(By.ID, 'frmNovo:listaCli_input')
+    nome_promotor.send_keys(nome_promotor_text)
+    li_promotor = wait.until(EC.visibility_of_element_located((By.XPATH, "//ul[@class='ui-autocomplete-items ui-autocomplete-list ui-widget-content ui-widget ui-corner-all ui-helper-reset']/li[1]")))
+    li_promotor.click()
 
 # Interface Gráfica
 
@@ -147,7 +157,10 @@ janela.setStyleSheet("""
         border: 0.5px solid black;
         border-radius: 5;
         padding: 5;                        
-    }                                                    
+    }
+    #erro {         
+        color: red;                        
+    }                                                                          
 
 """)
 
@@ -192,6 +205,10 @@ combo_box.addItem("People")
 
 # label para aparecer os produtos inclusos
 label_resultado = QLabel("")
+
+# label para mostrar se houve erro 
+label_erro = QLabel("")
+label_erro.setObjectName("erro")
 
 # button Salvar no Excel
 button = QPushButton("Salvar no Excel")
@@ -244,6 +261,7 @@ layout.addLayout(h2_layout)
 layout.setSpacing(20)
 layout.addLayout(h4_layout)
 layout.addWidget(label_resultado)
+layout.addWidget(label_erro)
 layout.addLayout(h3_layout)
 # layout.addStretch()
 
