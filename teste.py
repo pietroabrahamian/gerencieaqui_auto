@@ -74,33 +74,80 @@ def gerencieAqui():
     li_promotor = wait.until(EC.visibility_of_element_located((By.XPATH, "//ul[@class='ui-autocomplete-items ui-autocomplete-list ui-widget-content ui-widget ui-corner-all ui-helper-reset']/li[1]")))
     li_promotor.click()
 
+    # lendo o excel
+
+    #caminho das planilhas
+    caminho_planilha_nome = pd.read_excel("bases/PROMOTORES_PERIFERIA.xlsx")
+    caminho_plainlha_pedido = pd.read_excel("bases/PITU_Logix.xlsx")
+
+    for _, pessoa in caminho_planilha_nome.iterrows():
+        nome_pessoa = pessoa["NOME"]
+
+        try:
+            campo_nome = driver.find_element(By.ID, "frmNovo:listaCli_input")
+            campo_nome.clear()
+            campo_nome.send_keys(nome_pessoa)
+            li_nome = wait.until(EC.visibility_of_element_located((By.XPATH, "//ul[@class='ui-autocomplete-items ui-autocomplete-list ui-widget-content ui-widget ui-corner-all ui-helper-reset']/li[1]")))
+            li_nome.click()
+
+            for _, linha_produto in caminho_plainlha_pedido.iterrows():
+                produto = linha_produto["PRODUTO"]
+                quantidade = linha_produto["QUANTIDADE POR - CX"]
+
+                # preencher produto
+                campo_produto = driver.find_element(By.ID, "frmNovo:basicPojo_input")
+                campo_produto.clear()
+                campo_produto.send_keys(produto)
+                li_produto = wait.until(EC.visibility_of_element_located((By.XPATH, "//ul[@class='ui-autocomplete-items ui-autocomplete-list ui-widget-content ui-widget ui-corner-all ui-helper-reset']/li[1]")))
+                li_produto.click()
+
+                # preencher quantidade
+                campo_quantidade = driver.find_element(By.ID, "frmNovo:quant")
+                campo_quantidade.clear()
+                campo_quantidade.send_keys(quantidade)
+
+                # inserir o produto
+                inserir = driver.find_element(By.ID, "frmNovo:j_idt152")
+                inserir.click()
+
+        except Exception as e:
+            print(f"⚠️ Erro ao processar pedido para {nome_pessoa}: {e}")
+    
+    salvar = driver.find_element(By.ID, "frmNovo:salva")
+    salvar.click()
+
+
+
 # Interface Gráfica
 
 
-# criando a função para salvar no excel
-caminho_arquivo = "bases/base_produtos.xlsx"
+# # criando a função para salvar no excel
+# caminho_arquivo = f"bases/base_produtos.xlsx"
 
-def salvar_no_excel():
-    produtos_texto = input_pedido.text().strip()
 
-    if produtos_texto:
-        produtos_lista = [produto.strip() for produto in produtos_texto.split(";") if produtos_texto.strip()]
+# def salvar_no_excel():
+#     caminho_arquivo = f"bases/base_produtos.xlsx"
 
-        if produtos_lista:
-            df = pd.DataFrame({"Produto":produtos_lista})
+#     produtos_texto = input_pedido.text().strip()
 
-            try: 
+#     if produtos_texto:
+#         produtos_lista = [produto.strip() for produto in produtos_texto.split(";") if produtos_texto.strip()]
+
+#         if produtos_lista:
+#             df = pd.DataFrame({"Produto":produtos_lista})
+
+#             try: 
     
-                df.to_excel(caminho_arquivo, index=False)
-                label_resultado.setText(f"{len(produtos_lista)} produtos salvos com sucesso")
-            except Exception as e:
-                label_resultado.setText(f"Erro ao salvar os produtos: {e}")
-        else:
-            label_resultado.setText("Nenhum produto válido inserido")
-    else:
-        label_resultado.setText("O campo está vazio. Insira produtos para salvar.")
+#                 df.to_excel(caminho_arquivo, index=False)
+#                 label_resultado.setText(f"{len(produtos_lista)} produtos salvos com sucesso")
+#             except Exception as e:
+#                 label_resultado.setText(f"Erro ao salvar os produtos: {e}")
+#         else:
+#             label_resultado.setText("Nenhum produto válido inserido")
+#     else:
+#         label_resultado.setText("O campo está vazio. Insira produtos para salvar.")
 
-    input_pedido.clear()
+#     input_pedido.clear()
 
 
 #cirando a base da interface
@@ -271,6 +318,4 @@ container.setLayout(layout)
 container.move((janela.width() - container.width()) // 2, (janela.height() - container.height()) // 2)
 janela.show()
 sys.exit((app.exec_()))
-
-
 
