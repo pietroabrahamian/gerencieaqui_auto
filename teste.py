@@ -11,7 +11,7 @@ import pandas as pd
 import os
 #interface grafica
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit, QLabel, QGraphicsDropShadowEffect, QComboBox
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit, QLabel, QGraphicsDropShadowEffect, QComboBox, QFileDialog
 from PyQt5.QtGui import QColor
 from PyQt5.QtCore import Qt
 
@@ -19,8 +19,6 @@ from PyQt5.QtCore import Qt
 
 
 def gerencieAqui():
-    if input_nome == "":
-        label_erro.setText("Preencha todos os campos!!")
 
     # Fazendo o download do WebDriver mais recente e capturando o caminho do arquivo
     driver_path = ChromeDriverManager().install()
@@ -48,7 +46,7 @@ def gerencieAqui():
         # acessar_workon = wait.until(EC.visibility_of_element_located((By.XPATH, '//tr[@datari="0"//td[@role="gridcell][4]//a')))
         acessar_workon = wait.until(EC.visibility_of_element_located((By.XPATH, "//a[contains(@onclick, 'mojarra.jsfcljs')]")))
         acessar_workon.click()
-    if opcao_combobox == "People":
+    if opcao_combobox == "ON JOB":
         acessar_people = wait.until(EC.visibility_of_element_located((By.XPATH, "//tr[@data-ri='1']//td[@role='gridcell'][4]//a[contains(@onclick, 'mojarra.jsfcljs')]")))
         acessar_people.click()    
 
@@ -57,28 +55,33 @@ def gerencieAqui():
     pedido_venda.click()
 
     #novo pedido de venda
-    novo_pedido = wait.until(EC.visibility_of_element_located((By.ID, "j_idt79")))
+    novo_pedido = wait.until(EC.visibility_of_element_located((By.ID, "j_idt81")))
     novo_pedido.click()
 
     # vendedor
     vendedor_responsavel = wait.until(EC.visibility_of_element_located((By.ID, 'frmNovo:listaVend_input')))
     vendedor_responsavel.clear()
-    vendedor_responsavel.send_keys("25431")
+    vendedor_responsavel.send_keys("Alice")
     li_vendedor = wait.until(EC.visibility_of_element_located((By.XPATH, "//ul[@class='ui-autocomplete-items ui-autocomplete-list ui-widget-content ui-widget ui-corner-all ui-helper-reset']/li[1]")))
     li_vendedor.click()
-
-    # nome do promotor
-    nome_promotor_text = input_nome.text().strip()
-    nome_promotor = driver.find_element(By.ID, 'frmNovo:listaCli_input')
-    nome_promotor.send_keys(nome_promotor_text)
-    li_promotor = wait.until(EC.visibility_of_element_located((By.XPATH, "//ul[@class='ui-autocomplete-items ui-autocomplete-list ui-widget-content ui-widget ui-corner-all ui-helper-reset']/li[1]")))
-    li_promotor.click()
 
     # lendo o excel
 
     #caminho das planilhas
-    caminho_planilha_nome = pd.read_excel("bases/PROMOTORES_PERIFERIA.xlsx")
-    caminho_plainlha_pedido = pd.read_excel("bases/PITU_Logix.xlsx")
+
+    caminho_planilha_nome = ""
+    caminho_planilha_pedido = ""
+    caminho_planilha_nome_periferia = pd.read_excel("bases/PROMOTORES_PERIFERIA.xlsx")
+    caminho_planilha_pedido_PITU_LOGIX = pd.read_excel("bases/Pasta1.xlsx")
+    # caminho_planilha_pedido_PITU_LOGIX = pd.read_excel("bases/PITU_Logix.xlsx", sheet_name="RESULTADO")
+
+    opcao_combobox_nome = combo_box_nome.currentText()
+    if opcao_combobox_nome == "Periferia":
+        caminho_planilha_nome = caminho_planilha_nome_periferia
+    
+    opcao_combobox_pedido = combo_box_pedido.currentText()
+    if opcao_combobox_pedido == "PITU LOGIX":
+        caminho_planilha_pedido = caminho_planilha_pedido_PITU_LOGIX
 
     for _, pessoa in caminho_planilha_nome.iterrows():
         nome_pessoa = pessoa["NOME"]
@@ -90,67 +93,45 @@ def gerencieAqui():
             li_nome = wait.until(EC.visibility_of_element_located((By.XPATH, "//ul[@class='ui-autocomplete-items ui-autocomplete-list ui-widget-content ui-widget ui-corner-all ui-helper-reset']/li[1]")))
             li_nome.click()
 
-            for _, linha_produto in caminho_plainlha_pedido.iterrows():
+            for _, linha_produto in caminho_planilha_pedido.iterrows():
                 produto = linha_produto["PRODUTO"]
-                quantidade = linha_produto["QUANTIDADE POR - CX"]
+                quantidade = linha_produto["QTDREAL"]
+                print(f"Adicionando produto: {produto} | Quantidade: {quantidade}")
 
                 # preencher produto
-                campo_produto = driver.find_element(By.ID, "frmNovo:basicPojo_input")
+                campo_produto = wait.until(EC.visibility_of_element_located((By.ID, "frmNovo:basicPojo_input")))
                 campo_produto.clear()
                 campo_produto.send_keys(produto)
-                li_produto = wait.until(EC.visibility_of_element_located((By.XPATH, "//ul[@class='ui-autocomplete-items ui-autocomplete-list ui-widget-content ui-widget ui-corner-all ui-helper-reset']/li[1]")))
-                li_produto.click()
+                time.sleep(2)
+                campo_produto.send_keys(Keys.RETURN)
+                time.sleep(2)
+                
 
                 # preencher quantidade
-                campo_quantidade = driver.find_element(By.ID, "frmNovo:quant")
+                campo_quantidade = wait.until(EC.visibility_of_element_located((By.ID, "frmNovo:quant")))
                 campo_quantidade.clear()
+                time.sleep(1)
+                campo_quantidade = wait.until(EC.visibility_of_element_located((By.ID, "frmNovo:quant")))
+                campo_quantidade.click()
                 campo_quantidade.send_keys(quantidade)
+                time.sleep(1)
 
                 # inserir o produto
-                inserir = driver.find_element(By.ID, "frmNovo:j_idt152")
+                inserir = wait.until(EC.visibility_of_element_located((By.XPATH, "//span[text()='Inserir']")))
                 inserir.click()
+                time.sleep(1)
 
         except Exception as e:
             print(f"⚠️ Erro ao processar pedido para {nome_pessoa}: {e}")
     
-    salvar = driver.find_element(By.ID, "frmNovo:salva")
-    salvar.click()
+    # salvar = driver.find_element(By.ID, "frmNovo:salva")
+    # salvar.click()
 
 
 
 # Interface Gráfica
 
-
-# # criando a função para salvar no excel
-# caminho_arquivo = f"bases/base_produtos.xlsx"
-
-
-# def salvar_no_excel():
-#     caminho_arquivo = f"bases/base_produtos.xlsx"
-
-#     produtos_texto = input_pedido.text().strip()
-
-#     if produtos_texto:
-#         produtos_lista = [produto.strip() for produto in produtos_texto.split(";") if produtos_texto.strip()]
-
-#         if produtos_lista:
-#             df = pd.DataFrame({"Produto":produtos_lista})
-
-#             try: 
-    
-#                 df.to_excel(caminho_arquivo, index=False)
-#                 label_resultado.setText(f"{len(produtos_lista)} produtos salvos com sucesso")
-#             except Exception as e:
-#                 label_resultado.setText(f"Erro ao salvar os produtos: {e}")
-#         else:
-#             label_resultado.setText("Nenhum produto válido inserido")
-#     else:
-#         label_resultado.setText("O campo está vazio. Insira produtos para salvar.")
-
-#     input_pedido.clear()
-
-
-#cirando a base da interface
+#criando a base da interface
 app = QApplication(sys.argv)
 
 #criando a jenala principal 
@@ -161,11 +142,7 @@ janela.setStyleSheet("""
     QWidget {
         background-color: white; 
         font-size: 18px;              
-    }    
-
-    container {
-        border: 2px solid blue;
-    }                 
+    }                  
 
     QPushButton{                 
         background-color: white;
@@ -192,6 +169,7 @@ janela.setStyleSheet("""
 
     QLabel {
         font-size: 20px;
+        padding: 5;
     }
                      
     QLineEdit {         
@@ -207,12 +185,12 @@ janela.setStyleSheet("""
     }
     #erro {         
         color: red;                        
-    }                                                                          
+    }                                                                        
 
 """)
 
 container = QWidget(janela)
-container.setFixedSize(600, 450)
+container.setFixedSize(600, 550)
 
 
 # layout da janela
@@ -222,10 +200,10 @@ layout = QVBoxLayout() # vertical
 layout.setAlignment(Qt.AlignCenter)
 #layout horiontal 1
 h_layout = QHBoxLayout() # horizontal
-h_layout.setAlignment(Qt.AlignCenter)
+# h_layout.setAlignment(Qt.AlignCenter)
 #layout horiontal 2
 h2_layout = QHBoxLayout()
-h2_layout.setAlignment(Qt.AlignCenter)
+# h2_layout.setAlignment(Qt.AlignCenter)
 # layout horizontal 3
 h3_layout = QHBoxLayout()
 h3_layout.setAlignment(Qt.AlignCenter)
@@ -233,22 +211,25 @@ h3_layout.setAlignment(Qt.AlignCenter)
 h4_layout = QHBoxLayout()
 # h4_layout.setAlignment(Qt.AlignCenter)
 
-# inserir nome label + input
-label_nome = QLabel("Nome do Promotor:")
-input_nome = QLineEdit()
-input_nome.setFixedWidth(300) # tamanho fixo de 300px
+# selecionar o arquivo que contém os colaboradores
+label_nome = QLabel("Tipo de Promotor:")
+combo_box_nome = QComboBox()
+combo_box_nome.setFixedWidth(300)
+combo_box_nome.addItem("Periferia")
+combo_box_nome.addItem("Centro")
 
 # insira o pedido
 label_pedido = QLabel("Insira o pedido:")
-input_pedido = QLineEdit()
-input_pedido.setFixedWidth(300)
+combo_box_pedido = QComboBox()
+combo_box_pedido.setFixedWidth(300)
+combo_box_pedido.addItem("PITU LOGIX")
 
 # escolha a empresa 
 label_combo_box = QLabel("Escolha a Empresa:")
 combo_box = QComboBox()
 combo_box.setFixedWidth(300)
+combo_box.addItem("ON JOB")
 combo_box.addItem("WorkOn")
-combo_box.addItem("People")
 
 # label para aparecer os produtos inclusos
 label_resultado = QLabel("")
@@ -260,7 +241,7 @@ label_erro.setObjectName("erro")
 # button Salvar no Excel
 button = QPushButton("Salvar no Excel")
 button.setObjectName("button")
-button.clicked.connect(salvar_no_excel)
+# button.clicked.connect(salvar_no_excel)
 button.setStyleSheet("")
 button.setFixedWidth(190) # tamanho fixo
 button.setFixedHeight(50) # tamanho fixo
@@ -293,9 +274,9 @@ button_auto.setGraphicsEffect(shadow_effect1)
 
 
 h_layout.addWidget(label_nome)
-h_layout.addWidget(input_nome)
+h_layout.addWidget(combo_box_nome, alignment=Qt.AlignLeft)
 h2_layout.addWidget(label_pedido)
-h2_layout.addWidget(input_pedido)
+h2_layout.addWidget(combo_box_pedido, alignment=Qt.AlignLeft)
 h3_layout.addWidget(button)
 h3_layout.addWidget(button_auto)
 h4_layout.addWidget(label_combo_box)
@@ -318,4 +299,3 @@ container.setLayout(layout)
 container.move((janela.width() - container.width()) // 2, (janela.height() - container.height()) // 2)
 janela.show()
 sys.exit((app.exec_()))
-
